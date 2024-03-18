@@ -1,4 +1,4 @@
-import { deepValue } from "./utils"
+import { deepValue } from "./utils.js"
 
 
 function or(qq, doc) {

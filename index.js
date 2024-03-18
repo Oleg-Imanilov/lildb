@@ -95,18 +95,18 @@ class LilDb extends _LilDb {
     this.lastSaved = Date.now()
   }
 
-  async insert(data) {
+  insert(data) {
     if (Array.isArray(data)) {
-      return await Promise.all(data.map(r => this._insertDoc(r)))
+      return data.map(r => this._insertDoc(r))
     } else if (typeof data === 'object') {
-      const res = await this._insertDoc(data)
+      const res = this._insertDoc(data)
       return [res]
     } else {
       throw new Error('Invalid data type')
     }
   }
 
-  async query(query, { projection = false } = {}) {
+  query(query, { projection = false } = {}) {
     const arr = Object.values(this.DB).map(doc => _query(query, doc)).filter(r => !!r)
     if (projection) {
       return arr.map(r => {
@@ -121,16 +121,16 @@ class LilDb extends _LilDb {
     }
   }
 
-  async remove(query) {
-    const toRemove = await this.query(query)
+  remove(query) {
+    const toRemove = this.query(query)
     toRemove.forEach(r => {
       delete this.DB[r._id]
     })
     return toRemove.map(structuredClone)
   }
 
-  async update(query, update) {
-    const toUpdate = await this.query(query)
+  update(query, update) {
+    const toUpdate = this.query(query)
     toUpdate.forEach(r => {
       deepUpdate(update, r)
     })
