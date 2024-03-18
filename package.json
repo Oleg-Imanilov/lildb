@@ -1,5 +1,5 @@
 {
-  "name": "lildb",
+  "name": "@nosyara/lildb",
   "version": "1.0.0",
   "description": "In memory simple database",
   "author": "Oleg Imanilov",
