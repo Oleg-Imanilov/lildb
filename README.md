@@ -40,7 +40,7 @@ However, lilDb still provides the flexibility to persist your data:
 import lildb from '@nosyara/lildb';
 const db = new lildb();
 db.insert({a: 1});
-await db.saveAs('mydb.db');
+db.saveAs('mydb.db');
 ```
 * **AutoSave**: Automatically save the database to a file at specified intervals (e.g., every 30 seconds).
 ```javascript
@@ -108,6 +108,10 @@ Multiple logical operations can be combined for more complex queries:
 ```javascript
 // Condition: a = 10 and b != 10
 const result1 = db.query({ $and: [{ a: 10 }, {$not: { b: 10 }}] }); // Returns 1 record
+
+db.insert([{x:10, a:{b:{c:1}}}, {x:20, a:{b:{c:2}}}, {x:30, a:{b:{c:3}}}])
+
+const result2 = db.query({$in: { 'a.b.c': [2,3,4] }}) // returns 2 records
 ```
 
 Enjoy using **lilDb** for your small project needs, providing a lightweight and efficient data management solution.

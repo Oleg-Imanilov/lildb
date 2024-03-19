@@ -1,5 +1,4 @@
-import LilDb from './LilDb.js';
+import LilDb from './src/LilDb.js';
 
 export default LilDb
-
 

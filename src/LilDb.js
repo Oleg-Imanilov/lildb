@@ -1,5 +1,5 @@
-import { deepUpdate, deepValue, fileExists } from './utils.js'
-import { promises as fs } from 'fs';
+import { deepUpdate, deepValue } from './utils.js'
+import fs from 'fs';
 import _query from './query.js'
 import PrivateLilDb from './PrivateLilDb.js';
 
@@ -16,21 +16,12 @@ class LilDb extends PrivateLilDb {
    * @param {*} options autoSave: seconds, log: function ; defaults {autoSave = false, log = null}
    * @returns new instance of LilDb
    */
-  static async connect(fileName, { autoSave = false, log = null } = {}) {
+  static connect(fileName, { autoSave = false, log = null } = {}) {
     const db = new LilDb()
-    await db._connect(fileName, { autoSave, log })
+    db._connect(fileName, { autoSave, log })
     return db
   }
 
-  /**
-   * stop autoSave and save the db
-   */
-  async end() {
-    if (this.autoSave) {
-      clearInterval(this.autoSave)
-      await this.save()      
-    }
-  }
 
   /**
    * set callback function for logging
@@ -43,10 +34,10 @@ class LilDb extends PrivateLilDb {
   /**
    * @returns save the db to the file
    */
-  async save() {
+  save() {
     if (!this.fileName) throw new Error('No file name')
     if(this.needToSave) {
-        await this.saveAs(this.fileName)
+        this.saveAs(this.fileName)
     }
   }
 
@@ -54,13 +45,12 @@ class LilDb extends PrivateLilDb {
    * @param {*} fileName 
    * @param {*} options overwrite: boolean ; defaults {overwrite = true}
    */
-  async saveAs(fileName, { overwrite = true } = {}) {
-    const exists = await fileExists(fileName)
-    if (exists && !overwrite) {
+  saveAs(fileName, { overwrite = true } = {}) {
+    if (fs.existsSync(fileName) && !overwrite) {
       throw new Error('File exists')
     }
     this.fileName = fileName
-    await fs.writeFile(this.fileName, this.DB.map(r => JSON.stringify(r)).join('\n'), 'utf8')
+    fs.writeFileSync(this.fileName, this.DB.map(r => JSON.stringify(r)).join('\n'), 'utf8')
     this.lastSaved = Date.now()
     this.needToSave = false
   }
@@ -108,9 +98,8 @@ class LilDb extends PrivateLilDb {
 
   remove(query) {
     const toRemove = this.query(query)
-    toRemove.forEach(r => {
-      delete this.DB[r._id]
-    })
+    const toRemoveIds = toRemove.map(r => r._id)
+    this.DB = this.DB.filter(r => !toRemoveIds.includes(r._id))
     if(toRemove.length > 0) {
         this.needToSave = true
     }
@@ -125,7 +114,7 @@ class LilDb extends PrivateLilDb {
     if(toUpdate.length > 0) {
         this.needToSave = true
     }
-    return toUpdate
+    return toUpdate.map(doc => this._insertDoc(doc, true))
   }
 
   count() {

@@ -1,6 +1,6 @@
 {
   "name": "@nosyara/lildb",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "In memory simple database",
   "author": "Oleg Imanilov",
   "main": "index.js",
