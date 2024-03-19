@@ -1,19 +1,29 @@
 {
   "name": "@nosyara/lildb",
-  "version": "1.0.2",
-  "description": "In memory simple database",
+  "version": "1.0.3",
+  "description": "A Lightweight, In-Memory Database for Small to Medium Projects with ZERO dependencies",
   "author": "Oleg Imanilov",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "jest"
   },
-  "keywords": [],
+  "keywords": [
+    "in-memory-database",
+    "persistence",
+    "lightweight",
+    "zero-dependency",
+    "fast-data-access",
+    "easy-integration",
+    "secure",
+    "efficient",
+    "small-medium-projects",
+    "data-management"
+  ],
   "license": "MIT",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
-    "jest": "^29.7.0",    
+    "jest": "^29.7.0",
     "@babel/core": "^7.24.0",
     "@babel/preset-env": "^7.24.0"
   },
