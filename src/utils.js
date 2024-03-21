@@ -15,7 +15,7 @@ export function uuid(length = 32) {
 }
 
 export function deepValue(key, doc) {
-    if (typeof doc !== 'object') return null
+    if (typeof doc !== 'object' || !key) return null
     const kk = key.split('.')
     const d = doc[kk[0]]
     if (kk.length === 1) {
@@ -45,4 +45,12 @@ export function deepUpdate(from, to) {
             to[k] = from[k]
         }
     })
+}
+
+export function project(doc, projection) {
+    const projected = {}
+    Object.keys(projection).forEach(k => {
+        projected[k] = deepValue(projection[k], doc)
+    })
+    return projected
 }

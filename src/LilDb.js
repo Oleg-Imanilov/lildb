@@ -1,4 +1,4 @@
-import { deepUpdate, deepValue } from './utils.js'
+import { deepUpdate, deepValue, project, deepCompareFunc } from './utils.js'
 import fs from 'fs';
 import _query from './query.js'
 import PrivateLilDb from './PrivateLilDb.js';
@@ -36,8 +36,8 @@ class LilDb extends PrivateLilDb {
    */
   save() {
     if (!this.fileName) throw new Error('No file name')
-    if(this.needToSave) {
-        this.saveAs(this.fileName)
+    if (this.needToSave) {
+      this.saveAs(this.fileName)
     }
   }
 
@@ -81,18 +81,43 @@ class LilDb extends PrivateLilDb {
     }
   }
 
-  query(query, { projection = false } = {}) {
-    const arr = Object.values(this.DB).map(doc => _query(query, doc)).filter(r => !!r)
-    if (projection) {
-      return arr.map(r => {
-        const d = {}
-        Object.keys(projection).forEach(k => {
-          d[projection[k]] = deepValue(k,r)
-        })
-        return d
+  query(query, { group = false, projection = false, sortAsc = false, sortDesc = false } = {}) {
+    let arr = Object.values(this.DB).map(doc => _query(query, doc)).filter(r => !!r)
+    if (sortAsc) {
+      arr = arr.sort((a, b) => {
+        const va = deepValue(sortAsc, a)
+        const vb = deepValue(sortAsc, b)
+        if (va < vb) {
+          return -1;
+        }
+        if (va > vb) {
+          return 1;
+        }
+        return 0;
       })
+    } else if (sortDesc) {
+      arr = arr.sort((a, b) => {
+        const va = deepValue(sortDesc, a)
+        const vb = deepValue(sortDesc, b)
+        if (va < vb) {
+          return 1;
+        }
+        if (va > vb) {
+          return -1;
+        }
+        return 0;
+      })
+    }
+    if (group) {
+      const grouped = {}
+      arr.forEach(r => {
+        const groupVal = deepValue(group, r)
+        grouped[groupVal] = grouped[groupVal] || []
+        grouped[groupVal].push(projection ? project(r, projection) : structuredClone(r))
+      })
+      return grouped
     } else {
-      return arr.map(structuredClone)
+      return arr.map(r => projection ? project(r, projection) : structuredClone(r))
     }
   }
 
@@ -100,10 +125,10 @@ class LilDb extends PrivateLilDb {
     const toRemove = this.query(query)
     const toRemoveIds = toRemove.map(r => r._id)
     this.DB = this.DB.filter(r => !toRemoveIds.includes(r._id))
-    if(toRemove.length > 0) {
-        this.needToSave = true
+    if (toRemove.length > 0) {
+      this.needToSave = true
     }
-    return toRemove.map(structuredClone)
+    return toRemove.map(d => structuredClone(d))
   }
 
   update(query, update) {
@@ -111,8 +136,8 @@ class LilDb extends PrivateLilDb {
     toUpdate.forEach(r => {
       deepUpdate(update, r)
     })
-    if(toUpdate.length > 0) {
-        this.needToSave = true
+    if (toUpdate.length > 0) {
+      this.needToSave = true
     }
     return toUpdate.map(doc => this._insertDoc(doc, true))
   }

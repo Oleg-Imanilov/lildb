@@ -114,4 +114,99 @@ db.insert([{x:10, a:{b:{c:1}}}, {x:20, a:{b:{c:2}}}, {x:30, a:{b:{c:3}}}])
 const result2 = db.query({$in: { 'a.b.c': [2,3,4] }}) // returns 2 records
 ```
 
+### Query Options
+
+Query result may be sorted, grouped and projected. 
+`db.query(<query object>, <options>)`
+
+**LilDb** supports following options:
+* **projection**: {newName: dot.separated.property}
+* **sortAsc**: dot.separated.property
+* **sortDesc**: dot.separated.property
+* **group**: dot.separated.property
+
+### Data Example
+
+```javascript
+  const users = [
+    { _id:1, name: 'Alice', department: { name: 'Engineering', managerId: 2 }, role: 'Developer' },
+    { _id:2, name: 'Bob', department: { name: 'Engineering', managerId: null }, role: 'Manager' },
+    { _id:3, name: 'Charlie', department: { name: 'Sales', managerId: 4 }, role: 'Salesperson' },
+    { _id:4, name: 'Diana', department: { name: 'Sales', managerId: null }, role: 'Manager' },
+    { _id:5, name: 'Ethan', department: { name: 'HR', managerId: 6 }, role: 'Recruiter' },
+    { _id:6, name: 'Fiona', department: { name: 'HR', managerId: null }, role: 'Manager' },
+  ];
+  db.insert(users);
+```
+
+### Sorting
+
+Any query result may be sorted by using `sortAsc` or `sortDesc` option 
+
+```javascript
+  const result = db.query({}, {sortDesc: 'name', projection: { user:"name", manager: "department.managerId" }});
+```
+The output:
+```javascript
+[
+  {"user": "Fiona","manager": null},
+  {"user": "Ethan","manager": 6},
+  {"user": "Diana","manager": null},
+  {"user": "Charlie","manager": 4},
+  {"user": "Bob","manager": null},
+  {"user": "Alice","manager": 2}
+]
+```
+
+### Groupping
+
+```javascript
+  const result = db.query({}, {group:'department.name'});
+```
+The output:
+```javascript
+{"Engineering": [
+  { "_id": 1, "name": "Alice", "department": { "name": "Engineering", "managerId": 2}, "role": "Developer" },
+  { "_id": 2, "name": "Bob", "department": { "name": "Engineering", "managerId": null}, "role": "Manager" }
+],
+"Sales": [
+  { "_id": 3, "name": "Charlie", "department": { "name": "Sales", "managerId": 4}, "role": "Salesperson" },
+  { "_id": 4, "name": "Diana", "department": { "name": "Sales", "managerId": null}, "role": "Manager" }
+],
+"HR": [
+  { "_id": 5, "name": "Ethan", "department": { "name": "HR", "managerId": 6}, "role": "Recruiter" },
+  { "_id": 6, "name": "Fiona", "department": { "name": "HR", "managerId": null }, "role": "Manager"}
+]}
+```
+
+### Group & Projection 
+
+```javascript
+  const result = db.query({}, { group:'department.name', projection: { user:"name", department: "department.name" }});
+```
+
+Output:
+
+```javascript
+{
+  "Engineering": [
+    { "user": "Alice", "department": "Engineering" },
+    { "user": "Bob", "department": "Engineering" }
+  ],
+  "Sales": [
+    { "user": "Charlie", "department": "Sales" },
+    { "user": "Diana", "department": "Sales" }
+  ],
+  "HR": [
+    { "user": "Ethan", "department": "HR" },
+    { "user": "Fiona", "department": "HR" }
+  ]
+}
+```
+
+
+
+
+
+
 Enjoy using **lilDb** for your small project needs, providing a lightweight and efficient data management solution.
