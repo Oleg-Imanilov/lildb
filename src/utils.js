@@ -1,6 +1,4 @@
 import crypto from 'crypto';
-import { createInterface } from 'readline';
-import fs from 'fs'
 
 const ALPHANUMERICS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 

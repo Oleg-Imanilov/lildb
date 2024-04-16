@@ -1,6 +1,5 @@
 import { deepValue } from "./utils.js"
 
-
 function _or(qq, doc) {
     if(!Array.isArray(qq)) throw new Error('Invalid query. $or must be an array.')
     for(let i = 0; i < qq.length; i++) {

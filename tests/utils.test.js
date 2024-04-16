@@ -1,6 +1,5 @@
 import { deepValue, deepValueSet, uuid } from '../src/utils'
 
-
 test('uuid', () => {
     const result = uuid()
     expect(result).toHaveLength(32)

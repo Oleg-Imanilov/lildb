@@ -1,8 +1,7 @@
-import { deepUpdate, deepValue, project, deepCompareFunc } from './utils.js'
+import { deepUpdate, deepValue, project } from './utils.js'
 import fs from 'fs';
 import _query from './query.js'
 import PrivateLilDb from './PrivateLilDb.js';
-
 
 class LilDb extends PrivateLilDb {
 
