@@ -30,6 +30,7 @@ export function deepValueSet(key, doc, value) {
         doc[kk[0]] = value
         return
     } else {
+        if(doc[kk[0]] === undefined) doc[kk[0]] = {}
         return deepValueSet(kk.slice(1).join('.'), doc[kk[0]], value)
     }
 }

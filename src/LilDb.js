@@ -115,10 +115,12 @@ class LilDb {
   startAutoSave(autoSaveTime) {
     this.autoSave = autoSaveTime
     this.stopAutoSave()
+    this.save()
     if (this.autoSave && this.autoSave > 0) {
       this.autoSaveInterval = setInterval(() => {
-        this.save()
-        this.info('DB saved at', Date.now())
+        if(this.save()) {
+          this.info('DB saved at', Date.now())          
+        }
       }, this.autoSave * 1000)
     }
   }
@@ -131,6 +133,7 @@ class LilDb {
   stopAutoSave() {
     if (this.autoSaveInterval) {
       clearInterval(this.autoSaveInterval)
+      this.save()
     }
   }
 
@@ -174,15 +177,17 @@ class LilDb {
 
 
   /**
-   * Saves the database to the file if a file name is provided and there are changes to save.
+   * Saves the database if it needs to be saved.
    *
-   * @throws {Error} If no file name is provided.
+   * @return {boolean} Whether the database was saved.
    */
   save() {
     if (!this.fileName) throw new Error('No file name')
     if (this.needToSave) {
       this.saveAs(this.fileName)
+      return true
     }
+    return false
   }
 
 
