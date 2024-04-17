@@ -1,6 +1,6 @@
 {
   "name": "@nosyara/lildb",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A Lightweight, In-Memory Database for Small to Medium Projects with ZERO dependencies",
   "author": "Oleg Imanilov",
   "main": "index.js",
@@ -21,11 +21,10 @@
     "data-management"
   ],
   "license": "MIT",
-  "dependencies": {},
   "devDependencies": {
-    "jest": "^29.7.0",
     "@babel/core": "^7.24.0",
-    "@babel/preset-env": "^7.24.0"
+    "@babel/preset-env": "^7.24.0",
+    "jest": "^29.7.0"
   },
   "repository": {
     "type": "git",

@@ -1,29 +1,34 @@
-import { deepUpdate, deepValue, project } from './utils.js'
+import { uuid, deepUpdate, deepValue, project } from './utils.js'
 import fs from 'fs';
 import _query from './query.js'
-import PrivateLilDb from './PrivateLilDb.js';
 
-class LilDb extends PrivateLilDb {
-
-  constructor() {
-    super()
-  }
+class LilDb {
+  DB = []
+  fileName = null
+  log = null
+  needToSave = true
 
   /**
-   * 
-   * @param {*} fileName - file name to save the db
-   * @param {*} options autoSave: seconds, log: function ; defaults {autoSave = false, log = null}
-   * @returns new instance of LilDb
+   * Constructor for LilDb class.
+   *
+   * @param {Object} options - An object containing optional parameters:
+   *  - {string} fileName - The name of the file to connect to.
+   *  - {function} log - The logging function.
+   *  - {number} autoSave - The interval (in seconds) at which the database should be saved.
+   * @return {LilDb} LilDb instance.
    */
-  static connect(fileName, { autoSave = false, log = null } = {}) {
-    const db = new LilDb()
-    db._connect(fileName, { autoSave, log })
-    return db
+  constructor({ fileName = null, log = null, autoSave = false } = {}) {
+    this.log = log
+    if (fileName) {
+      this.connect(fileName)
+    }
+    if (autoSave > 0) {
+      this.startAutoSave(autoSave)
+    }
   }
 
-
   /**
-   * set callback function for logging
+   *  Set the log function
    * @param {*} logFunction 
    */
   setLog(logFunction) {
@@ -31,7 +36,147 @@ class LilDb extends PrivateLilDb {
   }
 
   /**
-   * @returns save the db to the file
+   * Logs an informational message if a logging function is set.
+   *
+   * @param {...*} args - The arguments to be passed to the logging function.
+   */
+  info(...args) {
+    if (this.log) this.log('INFO:', ...args)
+  }
+  /**
+   * Logs an error message if a logging function is set.
+   *
+   * @param {...*} args - The arguments to be passed to the logging function.
+   */
+  error(...args) {
+    if (this.log) this.log('ERROR:', ...args)
+  }
+  /**
+   * Logs a warning message if a logging function is set.
+   *
+   * @param {...*} args - The arguments to be passed to the logging function.
+   */
+  warn(...args) {
+    if (this.log) this.log('WARN:', ...args)
+  }
+
+  /**
+   * A function that loads data from a file into the database.
+   */
+  load() {
+    if (!this.fileName) {
+      this.warn('No file name defined')
+      return false
+    }
+    const txt = fs.readFileSync(this.fileName, 'utf-8')
+    const lines = txt ? txt.split('\n') : []
+    lines.forEach(line => {
+      if (line.length === 0) return
+      const doc = JSON.parse(line)
+      this._insertDoc(doc, true)
+    })
+    return true
+  }
+
+  /**
+   * Connects to a file and loads its content if it exists.
+   * If the file doesn't exist, it saves an empty database.
+   * If autoSave is set to a positive number, it starts the auto-save process.
+   *
+   * @param {string} fileName - The name of the file to connect to.
+   * @param {boolean} [autoSave=false] - Whether to enable auto-save.
+   * @return {void} This function does not return anything.
+   */
+  connect(fileName, autoSave = false) {
+    this.fileName = fileName
+    if (!fs.existsSync(this.fileName)) {
+      this.save()
+    } else {
+      if (this.load()) {
+        this.info({ action: 'loaded', time: Date.now() })
+      }
+    }
+
+    if (autoSave > 0) {
+      this.startAutoSave(autoSave)
+      process.on('exit', (code) => {
+        this.stopAutoSave()
+        this.save()
+      });
+    }
+  }
+
+  /**
+   * Starts the auto-save process with the specified autoSaveTime interval.
+   *
+   * @param {number} autoSaveTime - The interval (in seconds) at which the database should be saved.
+   * @return {void} This function does not return anything.
+   */
+  startAutoSave(autoSaveTime) {
+    this.autoSave = autoSaveTime
+    this.stopAutoSave()
+    if (this.autoSave && this.autoSave > 0) {
+      this.autoSaveInterval = setInterval(() => {
+        this.save()
+        this.info('DB saved at', Date.now())
+      }, this.autoSave * 1000)
+    }
+  }
+
+  /**
+   * Stops the auto-save process if it is currently running.
+   *
+   * @return {void} This function does not return anything.
+   */
+  stopAutoSave() {
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval)
+    }
+  }
+
+  /**
+   * Inserts a document into the database, optionally overriding any existing document with the same _id.
+   * > !!! Do not use this function directly. Use the `insert` method instead.
+   *
+   * @param {Object} doc - The document to insert.
+   * @param {boolean} [override=false] - Whether to override any existing document with the same _id.
+   * @throws {Error} If the document has a duplicate _id and override is false.
+   * @return {Object} The inserted document.
+   */
+  _insertDoc(doc, override = false) {
+    const oldIx = this.DB.findIndex(r => r._id === doc._id)
+    if (!override && oldIx >= 0) {
+      throw new Error('Duplicate _id')
+    }
+    const newDoc = structuredClone(doc)
+    if (!newDoc._id) {
+      newDoc._id = uuid()
+    }
+    if (override && oldIx >= 0) {
+      this.DB[oldIx] = newDoc
+    } else {
+      this.DB.push(newDoc)
+    }
+    this.needToSave = true
+    return structuredClone(newDoc)
+  }
+
+
+  /**
+   * stop autoSave and save the db
+   *
+   * @return {void} This function does not return anything.
+   */
+  end() {
+    this.stopAutoSave()
+    this.save()
+  }
+
+
+  /**
+   * Saves the database to the file if a file name is provided and there are changes to save.
+   *
+   * @throws {Error} If no file name is provided.
    */
   save() {
     if (!this.fileName) throw new Error('No file name')
@@ -40,9 +185,14 @@ class LilDb extends PrivateLilDb {
     }
   }
 
+
   /**
-   * @param {*} fileName 
-   * @param {*} options overwrite: boolean ; defaults {overwrite = true}
+   * Saves the database to the provided file name.
+   *
+   * @param {string} fileName - The name of the file to save to.
+   * @param {Object} options - An object containing optional parameters:
+   *   - {boolean} overwrite - Whether to overwrite the file if it already exists. Default is true.
+   * @throws {Error} If the file already exists and overwrite is false.
    */
   saveAs(fileName, { overwrite = true } = {}) {
     if (fs.existsSync(fileName) && !overwrite) {
@@ -54,9 +204,12 @@ class LilDb extends PrivateLilDb {
     this.needToSave = false
   }
 
+
   /**
-   * @param {*} data - single doc or array of docs
-   * @returns 
+   * Inserts a document into the database.
+   *
+   * @param {Object|Array<Object>} data - The document to insert.
+   * @returns {Object|Array<Object>} The inserted document(s).
    */
   insert(data) {
     if (Array.isArray(data)) {
@@ -69,6 +222,13 @@ class LilDb extends PrivateLilDb {
     }
   }
 
+
+  /**
+   * Inserts or updates a document in the database.
+   *
+   * @param {Object|Array<Object>} data - The document to insert or update.
+   * @returns {Object|Array<Object>} The inserted or updated document(s).
+   */
   upsert(data) {
     if (Array.isArray(data)) {
       return data.map(r => this._insertDoc(r, true))
@@ -80,6 +240,17 @@ class LilDb extends PrivateLilDb {
     }
   }
 
+  /**
+   * Queries the database.
+   *
+   * @param {Object} query - The query to use.
+   * @param {Object} options - An object containing optional parameters:
+   *   - {boolean} group - Whether to group the results. Default is false.
+   *   - {Object} projection - The projection to apply. Default is false.
+   *   - {Object} sortAsc - The field to sort the results in ascending order. Default is false.
+   *   - {Object} sortDesc - The field to sort the results in descending order. Default is false.
+   * @returns {Object|Array<Object>} The query results.
+   */
   query(query, { group = false, projection = false, sortAsc = false, sortDesc = false } = {}) {
     let arr = Object.values(this.DB).map(doc => _query(query, doc)).filter(r => !!r)
     if (sortAsc) {
@@ -120,6 +291,13 @@ class LilDb extends PrivateLilDb {
     }
   }
 
+
+
+  /**
+   * Removes a document from the database.
+   * @param {Object} query - The query to use.
+   * @returns {Object|Array<Object>} The removed document(s).
+   */
   remove(query) {
     const toRemove = this.query(query)
     const toRemoveIds = toRemove.map(r => r._id)
@@ -130,6 +308,14 @@ class LilDb extends PrivateLilDb {
     return toRemove.map(d => structuredClone(d))
   }
 
+
+  /**
+   * Updates documents in the database based on the provided query and update.
+   *
+   * @param {Object} query - The query to use for filtering the documents.
+   * @param {Object} update - The update to apply to the matching documents.
+   * @return {Array} An array of the updated documents.
+   */
   update(query, update) {
     const toUpdate = this.query(query)
     toUpdate.forEach(r => {
@@ -141,6 +327,12 @@ class LilDb extends PrivateLilDb {
     return toUpdate.map(doc => this._insertDoc(doc, true))
   }
 
+
+  /**
+   * Returns the number of documents in the database.
+   *
+   * @return {number} The number of documents.
+   */
   count() {
     return this.DB.length
   }

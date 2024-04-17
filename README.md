@@ -35,21 +35,65 @@ const db = new lildb();
 ```
 However, lilDb still provides the flexibility to persist your data:
 
-* **Save to File**: Manually save the current state of the database to a file.
+#### **Save to File**: Manually save the current state of the database to a file.
 ```javascript
 import lildb from '@nosyara/lildb';
 const db = new lildb();
 db.insert({a: 1});
 db.saveAs('mydb.db');
 ```
-* **AutoSave**: Automatically save the database to a file at specified intervals (e.g., every 30 seconds).
+or 
+```javascript
+import lildb from '@nosyara/lildb';
+const db = new lildb();
+db.insert({a: 1});
+db.connect('mydb.db');
+db.save()
+// ...
+db.insert({b: 2});
+// ...
+db.save()
+```
+
+####  **AutoSave**: Automatically save the database to a file at specified intervals (e.g., every 30 seconds).
+
+Option 1:
 ```javascript
 import lildb from '@nosyara/lildb';
 
 const db = new lildb();
 db.insert({a: 1});
-db.connect('test.db', {autosave: 30}); // Autosave every 30 seconds
+db.connect('test.db', 30); // Autosave every 30 seconds
 ```
+
+Option 2:
+```javascript
+import lildb from '@nosyara/lildb';
+
+const db = new lildb({fileName:'test.db', autoSave:10}); // Save every 10 seconds into 'test.db'
+db.insert({a: 1});
+// ... wait 10 seconds
+// Saved
+```
+
+Option 3:
+```javascript
+import lildb from '@nosyara/lildb';
+
+const db = new lildb({fileName:'test.db'}); // Use 'test.db' file
+db.insert({a: 1});
+
+db.startAutoSave(10) // Save DB every 10 seconds
+
+// ...
+
+db.stopAutoSave()
+```
+
+
+####  By calling `db.end()` you making sure, that autoSave stopped, and the database is saved.
+
+
 ## Data Manipulation
 
 ### Inserting Data
@@ -109,8 +153,12 @@ Multiple logical operations can be combined for more complex queries:
 // Condition: a = 10 and b != 10
 const result1 = db.query({ $and: [{ a: 10 }, {$not: { b: 10 }}] }); // Returns 1 record
 
-db.insert([{x:10, a:{b:{c:1}}}, {x:20, a:{b:{c:2}}}, {x:30, a:{b:{c:3}}}])
+db.insert([
+  {x:10, a:{b:{c:1}}}, 
+  {x:20, a:{b:{c:2}}}, 
+  {x:30, a:{b:{c:3}}}])
 
+// Condition a->b->c in (2, 3, 4)
 const result2 = db.query({$in: { 'a.b.c': [2,3,4] }}) // returns 2 records
 ```
 

@@ -12,10 +12,9 @@ describe('LilDb', () => {
     });
 
     describe('connect', () => {
-        it('should create and return a new instance of LilDb', () => {
-            const connectedDb = LilDb.connect('test.db');
-            expect(connectedDb).toBeInstanceOf(LilDb);
-            expect(connectedDb.fileName).toBe('test.db');
+        it('should use new fileName', () => {
+            db.connect('test.db');
+            expect(db.fileName).toBe('test.db');
         });
     });
 
