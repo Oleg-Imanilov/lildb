@@ -130,7 +130,9 @@ const result2 = db.query({'c.1': 2});
 
 Logical Operations
 
-lilDb supports several logical operators within queries: `$or`, `$and`, `$not`, `$in`, `$nin`, `$lt`, `$gt`, `$lte`, and `$gte`.
+lilDb supports several logical operators within queries: `$or`, `$and`, `$not`, `$in`, `$nin`, `$lt`, `$gt`, `$lte`,  `$gte`, `$regex`,`$size`, `$null`.
+   
+
 ```javascript
 db.insert([
     {a: 10, b: 10}, 

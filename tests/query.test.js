@@ -189,5 +189,79 @@ describe('Query Functions', () => {
         expect(q(query, doc)).toBeTruthy();
     });
 
+    describe('_ne function', () => {
+        it('should return true if the field is not equal to the value', () => {
+            const query = { $ne: { age: 31 } };
+            const r = q(query, doc)
+            expect(r).toBeTruthy();
+        });
+
+        it('should return false if the field is equal to the value', () => {
+            const query = { $ne: { age: 30 } };
+            expect(q(query, doc)).toBeFalsy();
+        });
+
+        it('should throw error if $ne is not an object', () => {
+            const query = { $ne: ['age', 31] };
+            expect(() => q(query, doc)).toThrow('Invalid query. $ne must be an object.');
+        });
+    });
+
+    describe('_null function', () => {
+        it('should return true if the field is not equal to the value', () => {
+            const query = { $null: 'abrtacadabra' };
+            const r = q(query, doc)
+            expect(r).toBeTruthy();
+        });
+
+        it('should return false if the field is equal to the value', () => {
+            const query = { $null: 'age' };
+            expect(q(query, doc)).toBeFalsy();
+        });
+
+        it('should return false if the complex field is equal to the value', () => {
+            const query = { $null: 'details.height' };
+            expect(q(query, doc)).toBeFalsy();
+        });
+
+        it('should throw error if $null is not an object', () => {
+            const query = { $null: ['age'] };
+            expect(() => q(query, doc)).toThrow('Invalid query. $null must be an string (key).');
+        });
+    });
+
+    describe('_regex function', () => {
+        it('should return true if the field matches the regex pattern', () => {
+            const query = { $regex: { name: /^John/ } };
+            expect(q(query, doc)).toBeTruthy();
+        });
+
+        it('should return false if the field does not match the regex pattern', () => {
+            const query = { $regex: { name: /^Jane/ } };
+            expect(q(query, doc)).toBeFalsy();
+        });
+
+        it('should throw error if $regex is not an object', () => {
+            const query = { $regex: ['name', /^John/] };
+            expect(() => q(query, doc)).toThrow('Invalid query. $regex must be an object.');
+        });
+    });
+
+    describe('_size function', () => {
+        it('should return true if the array has the specified size', () => {
+            const query = { $size : { hobbies: 3 }};
+            expect(q(query, doc)).toBeTruthy();
+        });
+
+        it('should return false if the array does not have the specified size', () => {
+            const query = { $size: {hobbies: 2 } };
+            expect(q(query, doc)).toBeFalsy();
+        });
+
+        it('should throw error if $size is not an object', () => {
+            const query = { $size: '3' };
+            expect(() => q(query, doc)).toThrow('Invalid query. $size must be an object.');
+        });
+    });
 
 });
