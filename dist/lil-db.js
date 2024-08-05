@@ -256,7 +256,12 @@
 	   * @return {LilDb} LilDb instance.
 	   */
 	  constructor(fileName = null) {
-	    if(fileName) this.load(fileName);
+	    if(fileName) {
+	      if(!fs.existsSync(fileName)) {
+	        fs.writeFileSync(fileName, '[]', 'utf-8');
+	      }
+	      this.load(fileName);
+	    }
 	  }
 
 	  /**
