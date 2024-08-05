@@ -11,24 +11,17 @@ describe('LilDb', () => {
         jest.clearAllMocks(); // Clear mock calls between tests
     });
 
-    describe('connect', () => {
-        it('should use new fileName', () => {
-            db.connect('test.db');
-            expect(db.fileName).toBe('test.db');
-        });
-    });
-
-    describe('setLog', () => {
-        it('should set the log function', () => {
-            const mockLog = jest.fn();
-            db.setLog(mockLog);
-            expect(db.log).toBe(mockLog);
-        });
-    });
-
     describe('save', () => {
         it('should throw an error if no filename is set', async () => {
             await expect(() => db.save()).toThrow('No file name');
+        });
+    });
+
+    describe('load', () => {
+        it('should load data from a file and throw', async () => {
+            fs.readFileSync.mockReturnValueOnce('[]');
+            db.load('test.db')
+            expect(fs.readFileSync).toHaveBeenCalledWith('test.db', 'utf-8');
         });
     });
 
@@ -37,7 +30,7 @@ describe('LilDb', () => {
             const testData = { data: 'test data' };
             db.insert(testData);
             db.saveAs('newfile.db');
-            expect(fs.writeFileSync).toHaveBeenCalledWith('newfile.db', expect.any(String), 'utf8');
+            expect(fs.writeFileSync).toHaveBeenCalledWith('newfile.db', expect.any(String), 'utf-8');
             expect(db.fileName).toBe('newfile.db');
         });
     });
@@ -47,9 +40,20 @@ describe('LilDb', () => {
             const data = { a: 1 };
             const result = db.insert(data);
             expect(result).toHaveLength(1);
-            expect(result[0]).toHaveProperty('_id');
+            expect(result[0]).toHaveProperty('id');
         });
     });
+
+    describe('insert throws duplicate ID', () => {
+        it('should throw duplicate ID and when insert data incorrectly', async () => {
+            const data = { id:1, a: 1 };
+            const result = db.insert(data);
+            await expect(() => db.insert(data)).toThrow('Duplicate id');
+        });
+    });
+
+
+
 
     describe('query', () => {
         it('should return correct query results', () => {

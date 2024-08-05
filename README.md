@@ -46,8 +46,8 @@ or
 ```javascript
 import lildb from '@nosyara/lildb';
 const db = new lildb();
-db.insert({a: 1});
-db.connect('mydb.db');
+db.load('mydb.db');
+// ...
 db.save()
 // ...
 db.insert({b: 2});
@@ -55,56 +55,17 @@ db.insert({b: 2});
 db.save()
 ```
 
-####  **AutoSave**: Automatically save the database to a file at specified intervals (e.g., every 30 seconds).
-
-Option 1:
-```javascript
-import lildb from '@nosyara/lildb';
-
-const db = new lildb();
-db.insert({a: 1});
-db.connect('test.db', 30); // Autosave every 30 seconds
-```
-
-Option 2:
-```javascript
-import lildb from '@nosyara/lildb';
-
-const db = new lildb({fileName:'test.db', autoSave:10}); // Save every 10 seconds into 'test.db'
-db.insert({a: 1});
-// ... wait 10 seconds
-// Saved
-```
-
-Option 3:
-```javascript
-import lildb from '@nosyara/lildb';
-
-const db = new lildb({fileName:'test.db'}); // Use 'test.db' file
-db.insert({a: 1});
-
-db.startAutoSave(10) // Save DB every 10 seconds
-
-// ...
-
-db.stopAutoSave()
-```
-
-
-####  By calling `db.end()` you making sure, that autoSave stopped, and the database is saved.
-
-
 ## Data Manipulation
 
 ### Inserting Data
 
-**lilDb** allows insertion of either single objects or arrays of objects. Each document will automatically be assigned a 32-character `_id` unless one is explicitly provided.
+**lilDb** allows insertion of either single objects or arrays of objects. Each document will automatically be assigned a 32-character `id` unless one is explicitly provided.
 
 ```javascript
 import lildb from '@nosyara/lildb';
 const db = new lildb();
 db.insert({a: 1});
-db.insert([{a: 2}, {a: 3}, {a: 4, _id: 'my-unique-id'}]);
+db.insert([{a: 2}, {a: 3}, {a: 4, id: 'my-unique-id'}]);
 ```
 
 ### Querying Data
@@ -116,7 +77,7 @@ For a basic query, all properties in the query object must match those in the da
 
 ```javascript
 const x = db.query({a: 4});
-const y = db.query({_id: 'my-unique-id'});
+const y = db.query({id: 'my-unique-id'});
 ```
 
 Queries can also match nested properties:
@@ -179,12 +140,12 @@ Query result may be sorted, grouped and projected.
 
 ```javascript
   const users = [
-    { _id:1, name: 'Alice', department: { name: 'Engineering', managerId: 2 }, role: 'Developer' },
-    { _id:2, name: 'Bob', department: { name: 'Engineering', managerId: null }, role: 'Manager' },
-    { _id:3, name: 'Charlie', department: { name: 'Sales', managerId: 4 }, role: 'Salesperson' },
-    { _id:4, name: 'Diana', department: { name: 'Sales', managerId: null }, role: 'Manager' },
-    { _id:5, name: 'Ethan', department: { name: 'HR', managerId: 6 }, role: 'Recruiter' },
-    { _id:6, name: 'Fiona', department: { name: 'HR', managerId: null }, role: 'Manager' },
+    { id:1, name: 'Alice', department: { name: 'Engineering', managerId: 2 }, role: 'Developer' },
+    { id:2, name: 'Bob', department: { name: 'Engineering', managerId: null }, role: 'Manager' },
+    { id:3, name: 'Charlie', department: { name: 'Sales', managerId: 4 }, role: 'Salesperson' },
+    { id:4, name: 'Diana', department: { name: 'Sales', managerId: null }, role: 'Manager' },
+    { id:5, name: 'Ethan', department: { name: 'HR', managerId: 6 }, role: 'Recruiter' },
+    { id:6, name: 'Fiona', department: { name: 'HR', managerId: null }, role: 'Manager' },
   ];
   db.insert(users);
 ```
@@ -216,16 +177,16 @@ The output:
 The output:
 ```javascript
 {"Engineering": [
-  { "_id": 1, "name": "Alice", "department": { "name": "Engineering", "managerId": 2}, "role": "Developer" },
-  { "_id": 2, "name": "Bob", "department": { "name": "Engineering", "managerId": null}, "role": "Manager" }
+  { "id": 1, "name": "Alice", "department": { "name": "Engineering", "managerId": 2}, "role": "Developer" },
+  { "id": 2, "name": "Bob", "department": { "name": "Engineering", "managerId": null}, "role": "Manager" }
 ],
 "Sales": [
-  { "_id": 3, "name": "Charlie", "department": { "name": "Sales", "managerId": 4}, "role": "Salesperson" },
-  { "_id": 4, "name": "Diana", "department": { "name": "Sales", "managerId": null}, "role": "Manager" }
+  { "id": 3, "name": "Charlie", "department": { "name": "Sales", "managerId": 4}, "role": "Salesperson" },
+  { "id": 4, "name": "Diana", "department": { "name": "Sales", "managerId": null}, "role": "Manager" }
 ],
 "HR": [
-  { "_id": 5, "name": "Ethan", "department": { "name": "HR", "managerId": 6}, "role": "Recruiter" },
-  { "_id": 6, "name": "Fiona", "department": { "name": "HR", "managerId": null }, "role": "Manager"}
+  { "id": 5, "name": "Ethan", "department": { "name": "HR", "managerId": 6}, "role": "Recruiter" },
+  { "id": 6, "name": "Fiona", "department": { "name": "HR", "managerId": null }, "role": "Manager"}
 ]}
 ```
 
@@ -253,10 +214,5 @@ Output:
   ]
 }
 ```
-
-
-
-
-
 
 Enjoy using **lilDb** for your small project needs, providing a lightweight and efficient data management solution.

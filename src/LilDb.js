@@ -4,192 +4,63 @@ import _query from './query.js'
 
 class LilDb {
   DB = []
-  fileName = null
-  log = null
-  needToSave = true
-
+  
   /**
    * Constructor for LilDb class.
    *
-   * @param {Object} options - An object containing optional parameters:
-   *  - {string} fileName - The name of the file to connect to.
-   *  - {function} log - The logging function.
-   *  - {number} autoSave - The interval (in seconds) at which the database should be saved.
+   * @param {string} fileName - initial file to load
    * @return {LilDb} LilDb instance.
    */
-  constructor({ fileName = null, log = null, autoSave = false } = {}) {
-    this.log = log
-    if (fileName) {
-      this.connect(fileName)
-    }
-    if (autoSave > 0) {
-      this.startAutoSave(autoSave)
-    }
-  }
-
-  /**
-   *  Set the log function
-   * @param {*} logFunction 
-   */
-  setLog(logFunction) {
-    this.log = logFunction
-  }
-
-  /**
-   * Logs an informational message if a logging function is set.
-   *
-   * @param {...*} args - The arguments to be passed to the logging function.
-   */
-  info(...args) {
-    if (this.log) this.log('INFO:', ...args)
-  }
-  /**
-   * Logs an error message if a logging function is set.
-   *
-   * @param {...*} args - The arguments to be passed to the logging function.
-   */
-  error(...args) {
-    if (this.log) this.log('ERROR:', ...args)
-  }
-  /**
-   * Logs a warning message if a logging function is set.
-   *
-   * @param {...*} args - The arguments to be passed to the logging function.
-   */
-  warn(...args) {
-    if (this.log) this.log('WARN:', ...args)
+  constructor(fileName = null) {
+    if(fileName) this.load(fileName)
   }
 
   /**
    * A function that loads data from a file into the database.
    */
-  load() {
-    if (!this.fileName) {
-      this.warn('No file name defined')
-      return false
-    }
-    const txt = fs.readFileSync(this.fileName, 'utf-8')
-    const lines = txt ? txt.split('\n') : []
-    lines.forEach(line => {
-      if (line.length === 0) return
-      const doc = JSON.parse(line)
-      this._insertDoc(doc, true)
-    })
+  load(fileName) {
+    this.fileName = fileName
+    const txt = fs.readFileSync(fileName, 'utf-8')
+    this.DB = JSON.parse(txt)
     return true
   }
 
   /**
-   * Connects to a file and loads its content if it exists.
-   * If the file doesn't exist, it saves an empty database.
-   * If autoSave is set to a positive number, it starts the auto-save process.
-   *
-   * @param {string} fileName - The name of the file to connect to.
-   * @param {boolean} [autoSave=false] - Whether to enable auto-save.
-   * @return {void} This function does not return anything.
-   */
-  connect(fileName, autoSave = false) {
-    this.fileName = fileName
-    if (!fs.existsSync(this.fileName)) {
-      this.save()
-    } else {
-      if (this.load()) {
-        this.info({ action: 'loaded', time: Date.now() })
-      }
-    }
-
-    if (autoSave > 0) {
-      this.startAutoSave(autoSave)
-      process.on('exit', (code) => {
-        this.stopAutoSave()
-        this.save()
-      });
-    }
-  }
-
-  /**
-   * Starts the auto-save process with the specified autoSaveTime interval.
-   *
-   * @param {number} autoSaveTime - The interval (in seconds) at which the database should be saved.
-   * @return {void} This function does not return anything.
-   */
-  startAutoSave(autoSaveTime) {
-    this.autoSave = autoSaveTime
-    this.stopAutoSave()
-    this.save()
-    if (this.autoSave && this.autoSave > 0) {
-      this.autoSaveInterval = setInterval(() => {
-        if(this.save()) {
-          this.info('DB saved at', Date.now())          
-        }
-      }, this.autoSave * 1000)
-    }
-  }
-
-  /**
-   * Stops the auto-save process if it is currently running.
-   *
-   * @return {void} This function does not return anything.
-   */
-  stopAutoSave() {
-    if (this.autoSaveInterval) {
-      clearInterval(this.autoSaveInterval)
-      this.save()
-    }
-  }
-
-  /**
-   * Inserts a document into the database, optionally overriding any existing document with the same _id.
+   * Inserts a document into the database, optionally overriding any existing document with the same id.
    * > !!! Do not use this function directly. Use the `insert` method instead.
    *
    * @param {Object} doc - The document to insert.
-   * @param {boolean} [override=false] - Whether to override any existing document with the same _id.
-   * @throws {Error} If the document has a duplicate _id and override is false.
+   * @param {boolean} [override=false] - Whether to override any existing document with the same id.
+   * @throws {Error} If the document has a duplicate id and override is false.
    * @return {Object} The inserted document.
    */
   _insertDoc(doc, override = false) {
-    const oldIx = this.DB.findIndex(r => r._id === doc._id)
+    const oldIx = this.DB.findIndex(r => r.id === doc.id)
     if (!override && oldIx >= 0) {
-      throw new Error('Duplicate _id')
+      throw new Error('Duplicate id')
     }
     const newDoc = structuredClone(doc)
-    if (!newDoc._id) {
-      newDoc._id = uuid()
+    if (!newDoc.id) {
+      newDoc.id = uuid()
     }
     if (override && oldIx >= 0) {
       this.DB[oldIx] = newDoc
     } else {
       this.DB.push(newDoc)
     }
-    this.needToSave = true
     return structuredClone(newDoc)
   }
 
-
   /**
-   * stop autoSave and save the db
-   *
-   * @return {void} This function does not return anything.
-   */
-  end() {
-    this.stopAutoSave()
-    this.save()
-  }
-
-
-  /**
-   * Saves the database if it needs to be saved.
-   *
-   * @return {boolean} Whether the database was saved.
+   * Saves the database to the current file name.
    */
   save() {
-    if (!this.fileName) throw new Error('No file name')
-    if (this.needToSave) {
-      this.saveAs(this.fileName)
-      return true
+    if(this.fileName) {
+      this.saveAs(this.fileName, {overwrite: true})
+    } else {
+      throw new Error('No file name')
     }
-    return false
   }
-
 
   /**
    * Saves the database to the provided file name.
@@ -200,15 +71,12 @@ class LilDb {
    * @throws {Error} If the file already exists and overwrite is false.
    */
   saveAs(fileName, { overwrite = true } = {}) {
+    this.fileName = fileName
     if (fs.existsSync(fileName) && !overwrite) {
       throw new Error('File exists')
     }
-    this.fileName = fileName
-    fs.writeFileSync(this.fileName, this.DB.map(r => JSON.stringify(r)).join('\n'), 'utf8')
-    this.lastSaved = Date.now()
-    this.needToSave = false
+    fs.writeFileSync(fileName, JSON.stringify(this.DB), 'utf-8')
   }
-
 
   /**
    * Inserts a document into the database.
@@ -296,8 +164,6 @@ class LilDb {
     }
   }
 
-
-
   /**
    * Removes a document from the database.
    * @param {Object} query - The query to use.
@@ -305,11 +171,8 @@ class LilDb {
    */
   remove(query) {
     const toRemove = this.query(query)
-    const toRemoveIds = toRemove.map(r => r._id)
-    this.DB = this.DB.filter(r => !toRemoveIds.includes(r._id))
-    if (toRemove.length > 0) {
-      this.needToSave = true
-    }
+    const toRemoveIds = toRemove.map(r => r.id)
+    this.DB = this.DB.filter(r => !toRemoveIds.includes(r.id))
     return toRemove.map(d => structuredClone(d))
   }
 
@@ -326,12 +189,8 @@ class LilDb {
     toUpdate.forEach(r => {
       deepUpdate(update, r)
     })
-    if (toUpdate.length > 0) {
-      this.needToSave = true
-    }
     return toUpdate.map(doc => this._insertDoc(doc, true))
   }
-
 
   /**
    * Returns the number of documents in the database.

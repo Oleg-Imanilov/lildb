@@ -14,24 +14,24 @@ export function uuid(length = 32) {
 
 export function deepValue(key, doc) {
     if (typeof doc !== 'object' || !key) return null
-    const kk = key.split('.')
+    const kk = Array.isArray(key) ? key : key.split('.')
     const d = doc[kk[0]]
     if (kk.length === 1) {
         return d
     } else {
-        return deepValue(kk.slice(1).join('.'), d)
+        return deepValue(kk.slice(1), d)
     }
 }
 
 export function deepValueSet(key, doc, value) {
     if (typeof doc !== 'object') return
-    const kk = key.split('.')
+    const kk = Array.isArray(key) ? key : key.split('.')
     if (kk.length === 1) {
         doc[kk[0]] = value
         return
     } else {
         if(doc[kk[0]] === undefined) doc[kk[0]] = {}
-        return deepValueSet(kk.slice(1).join('.'), doc[kk[0]], value)
+        return deepValueSet(kk.slice(1), doc[kk[0]], value)
     }
 }
 
