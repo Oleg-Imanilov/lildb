@@ -1,4 +1,4 @@
-import LilDb from './src/LilDb.js';
+const LilDb = require('./src/LilDb');
 
-export default LilDb
+module.exports = LilDb
 
