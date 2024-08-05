@@ -1,6 +1,6 @@
-import { uuid, deepUpdate, deepValue, project } from './utils.js'
-import fs from 'fs';
-import _query from './query.js'
+const { uuid, deepUpdate, deepValue, project } = require('./utils')
+const fs = require('fs');
+const _query = require('./query')
 
 class LilDb {
   DB = []
@@ -203,6 +203,7 @@ class LilDb {
 
 }
 
-export default LilDb
+module.export = LilDb
+
 
 

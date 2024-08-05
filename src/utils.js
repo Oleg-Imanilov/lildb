@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+const crypto = require('crypto');
 
 const ALPHANUMERICS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
@@ -6,13 +6,13 @@ const ALPHANUMERICS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234
  * @param {*} length of target string
  * @returns random alphanumeric string of length
  */
-export function uuid(length = 32) {
+function uuid(length = 32) {
     return Array.from(crypto.randomBytes(length))
         .map(i => ALPHANUMERICS[i % ALPHANUMERICS.length])
         .join('');
 }
 
-export function deepValue(key, doc) {
+function deepValue(key, doc) {
     if (typeof doc !== 'object' || !key) return null
     const kk = Array.isArray(key) ? key : key.split('.')
     const d = doc[kk[0]]
@@ -23,7 +23,7 @@ export function deepValue(key, doc) {
     }
 }
 
-export function deepValueSet(key, doc, value) {
+function deepValueSet(key, doc, value) {
     if (typeof doc !== 'object') return
     const kk = Array.isArray(key) ? key : key.split('.')
     if (kk.length === 1) {
@@ -35,7 +35,8 @@ export function deepValueSet(key, doc, value) {
     }
 }
 
-export function deepUpdate(from, to) {
+
+function deepUpdate(from, to) {
     Object.keys(from).forEach(k => {
         if (typeof from[k] === 'object') {
             to[k] = to[k] || {}
@@ -46,10 +47,18 @@ export function deepUpdate(from, to) {
     })
 }
 
-export function project(doc, projection) {
+function project(doc, projection) {
     const projected = {}
     Object.keys(projection).forEach(k => {
         projected[k] = deepValue(projection[k], doc)
     })
     return projected
+}
+
+module.exports = {
+    uuid,
+    deepValue,
+    deepValueSet,
+    deepUpdate,
+    project
 }

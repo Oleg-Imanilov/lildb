@@ -1,4 +1,4 @@
-import { deepValue } from "./utils.js"
+const { deepValue } = require("./utils")
 
 function _or(qq, doc) {
     if (!Array.isArray(qq)) throw new Error('Invalid query. $or must be an array.')
@@ -107,7 +107,7 @@ const OP = {
     '$null': _null,
 }
 
-export default function _(query, doc) {
+function _(query, doc) {
     if (typeof query !== 'object' || Array.isArray(query)) throw new Error('Invalid query. Must be an object.')
     const qq = Object.keys(query)
     if (qq.length === 0) return doc
@@ -121,3 +121,5 @@ export default function _(query, doc) {
     }).every(v => v === true)
     return match ? doc : null;
 }
+
+module.exports = _;
