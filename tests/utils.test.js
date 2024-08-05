@@ -1,4 +1,4 @@
-import { deepValue, deepValueSet, deepUpdate, uuid } from '../src/utils'
+const { deepValue, deepValueSet, deepUpdate, uuid } = require('../src/utils')
 
 test('uuid', () => {
     const result = uuid()

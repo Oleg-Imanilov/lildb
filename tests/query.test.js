@@ -1,4 +1,4 @@
-import q from '../src/query.js'; 
+const q = require('../src/query.js');
 
 describe('Query Functions', () => {
     const doc = {

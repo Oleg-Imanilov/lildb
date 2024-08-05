@@ -1,5 +1,5 @@
-import LilDb from '../src/LilDb';
-import fs from 'fs';
+const LilDb = require('../src/LilDb');
+const fs = require('fs');
 
 jest.mock('fs');
 

@@ -203,7 +203,7 @@ class LilDb {
 
 }
 
-module.export = LilDb
+module.exports = LilDb
 
 
 
