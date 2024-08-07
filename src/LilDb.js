@@ -4,7 +4,8 @@ const _query = require('./query')
 
 class LilDb {
   DB = []
-  
+  JOINS = {}
+
   /**
    * Constructor for LilDb class.
    *
@@ -18,6 +19,24 @@ class LilDb {
       }
       this.load(fileName)
     }
+  }
+
+  /**
+   * Join other LilDb instance
+   * @param {*} alias - each reacord on this DB will include `record.alias` - containing joined records from other db
+   * @param {*} db2 - other LilDb instance
+   * @param {*} joinFields - fields to join. Object of deep fields {<this.db.key>:<other.db.key>, ...}
+   */
+  join(alias, db2, joinFields = {id:'id'}) {
+    this.JOINS[alias] = { db:db2, joinFields }
+  }
+
+  /**
+   * Remove joined records from current db
+   * @param {*} alias 
+   */
+  unjoin(alias) {
+    delete this.JOINS[alias]  
   }
 
   /**
@@ -80,7 +99,7 @@ class LilDb {
     if (fs.existsSync(fileName) && !overwrite) {
       throw new Error('File exists')
     }
-    fs.writeFileSync(fileName, JSON.stringify(this.DB), 'utf-8')
+    fs.writeFileSync(fileName, JSON.stringify(this.DB, null, 2), 'utf-8')
   }
 
   /**
@@ -131,6 +150,20 @@ class LilDb {
    */
   query(query, { group = false, projection = false, sortAsc = false, sortDesc = false } = {}) {
     let arr = Object.values(this.DB).map(doc => _query(query, doc)).filter(r => !!r)
+    if(Object.keys(this.JOINS)) {
+      Object.keys(this.JOINS).forEach(alias => {
+        const { db:jDb, joinFields } = this.JOINS[alias]
+        arr = arr.map(r => {
+            const q = {}
+            Object.keys(joinFields).forEach(k => {
+                q[joinFields[k]] = deepValue(k, r)
+            })
+            const joinList = jDb.query(q)
+            r[alias] = joinList.length === 0 ? null : joinList.length === 1 ? joinList[0] : joinList
+            return r
+        })
+      })
+    }
     if (sortAsc) {
       arr = arr.sort((a, b) => {
         const va = deepValue(sortAsc, a)

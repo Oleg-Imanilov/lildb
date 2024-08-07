@@ -215,4 +215,35 @@ Output:
 }
 ```
 
+### Join DBs
+
+```javascript
+const db1 = new LilDb()
+const db2 = new LilDb()
+
+db1.insert([
+  {id:1, name: "Samon", department: { name: "Sales"}},
+  {id:2, name: "David", department: { name: "Sales"}},
+  {id:3, name: "Sarah", department: { name: "Finance"}}
+])
+
+db2.insert([
+  {id:1, departmentName: "Sales", room: 123 },
+  {id:2, departmentName: "Finance", room: 678 },
+])
+
+db1.join('joinDepartment', db2, {'department.name': 'departmentName'})
+
+const result = db1.query({}, {projection: {name: 'name', room: 'joinDepartment.room'}})
+```
+Results:
+```javascript
+[
+  {"name": "Samon","room": 123},
+  {"name": "David","room": 123},
+  {"name": "Sarah","room": 678}
+]
+```
+
+
 Enjoy using **lilDb** for your small project needs, providing a lightweight and efficient data management solution.

@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "name": "John",
+    "cityId": 1,
+    "city": [
+      {
+        "id": 1,
+        "city": "New York"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Alice",
+    "cityId": 2
+  }
+]
